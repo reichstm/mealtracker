@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  mealtracker:
+    build: .
+    container_name: mealtracker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_USERNAME=${AUTH_USERNAME}
+      - AUTH_PASSWORD=${AUTH_PASSWORD}
+      - PORT=3000
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
