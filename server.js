@@ -77,14 +77,18 @@ app.get('/', (req, res) => {
                         <span class="text-2xl">🌅</span>
                         <h3 class="text-lg font-medium text-gray-700">Frühstück</h3>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="breakfast" placeholder="z.B. Müsli mit Früchten"
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <button onclick="saveMeal('Frühstück', 'breakfast')" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                            Speichern
-                        </button>
-                    </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <input type="text" id="breakfastMain" placeholder="Hauptspeise (z.B. Müsli)"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <input type="text" id="breakfastSide" placeholder="Beilage (z.B. Obst, Nüsse)"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <div class="md:col-span-2 text-right">
+                                <button onclick="saveMeal('Frühstück', 'breakfastMain', 'breakfastSide')" 
+                                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                                    Speichern
+                                </button>
+                            </div>
+                        </div>
                 </div>
 
                 <!-- Mittagessen -->
@@ -93,13 +97,17 @@ app.get('/', (req, res) => {
                         <span class="text-2xl">☀️</span>
                         <h3 class="text-lg font-medium text-gray-700">Mittagessen</h3>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="lunch" placeholder="z.B. Spaghetti Bolognese"
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <button onclick="saveMeal('Mittagessen', 'lunch')" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                            Speichern
-                        </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <input type="text" id="lunchMain" placeholder="Hauptspeise (z.B. Spaghetti Bolognese)"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="text" id="lunchSide" placeholder="Beilage (z.B. Salat)"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <div class="md:col-span-2 text-right">
+                            <button onclick="saveMeal('Mittagessen', 'lunchMain', 'lunchSide')" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                                Speichern
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -109,13 +117,17 @@ app.get('/', (req, res) => {
                         <span class="text-2xl">🌙</span>
                         <h3 class="text-lg font-medium text-gray-700">Abendessen</h3>
                     </div>
-                    <div class="flex gap-2">
-                        <input type="text" id="dinner" placeholder="z.B. Grillgemüse mit Reis"
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <button onclick="saveMeal('Abendessen', 'dinner')" 
-                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                            Speichern
-                        </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <input type="text" id="dinnerMain" placeholder="Hauptspeise (z.B. Grillgemüse)"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <input type="text" id="dinnerSide" placeholder="Beilage (z.B. Reis, Salat)"
+                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <div class="md:col-span-2 text-right">
+                            <button onclick="saveMeal('Abendessen', 'dinnerMain', 'dinnerSide')" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                                Speichern
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -163,6 +175,17 @@ app.get('/', (req, res) => {
     <script>
         let allMeals = [];
 
+        // Simple HTML-escape helper to avoid injecting raw HTML
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // Set today's date as default
         document.getElementById('selectedDate').valueAsDate = new Date();
 
@@ -170,22 +193,33 @@ app.get('/', (req, res) => {
         loadMeals();
         loadMealsForDate();
 
-        // Save meal function
-        async function saveMeal(mealType, inputId) {
+        // Save meal function (accepts main + optional side)
+        async function saveMeal(mealType, mainId, sideId) {
             const date = document.getElementById('selectedDate').value;
-            const dish = document.getElementById(inputId).value.trim();
-            
-            if (!dish) {
-                showNotification('Bitte geben Sie ein Gericht ein', 'error');
+            const main = (document.getElementById(mainId).value || '').trim();
+            const side = (document.getElementById(sideId).value || '').trim();
+
+            if (!main && !side) {
+                showNotification('Bitte geben Sie mindestens ein Gericht ein', 'error');
                 return;
             }
+
+            // Build payload: prefer dishes array for multiple items, keep single dish property for compatibility
+            const dishes = [];
+            if (main) dishes.push(main);
+            if (side) dishes.push(side);
 
             const meal = {
                 date: date,
                 mealType: mealType,
-                dish: dish,
                 timestamp: new Date().toISOString()
             };
+
+            if (dishes.length === 1) {
+                meal.dish = dishes[0];
+            } else if (dishes.length > 1) {
+                meal.dishes = dishes;
+            }
 
             try {
                 const response = await fetch('/api/meals', {
@@ -196,16 +230,16 @@ app.get('/', (req, res) => {
 
                 if (response.ok) {
                     const result = await response.json();
-                    
+
                     if (result.replaced) {
-                        // Show notification that meal was updated
                         showNotification(result.message, 'warning');
                     } else {
-                        // Show success notification
                         showNotification('Mahlzeit erfolgreich hinzugefügt!', 'success');
                     }
-                    
-                    document.getElementById(inputId).value = '';
+
+                    // clear inputs
+                    document.getElementById(mainId).value = '';
+                    document.getElementById(sideId).value = '';
                     loadMeals();
                     loadMealsForDate();
                 } else {
@@ -226,20 +260,41 @@ app.get('/', (req, res) => {
                 const response = await fetch('/api/meals');
                 const meals = await response.json();
                 
-                // Clear all input fields first
-                document.getElementById('breakfast').value = '';
-                document.getElementById('lunch').value = '';
-                document.getElementById('dinner').value = '';
+                // Clear all input fields first (main + side)
+                document.getElementById('breakfastMain').value = '';
+                document.getElementById('breakfastSide').value = '';
+                document.getElementById('lunchMain').value = '';
+                document.getElementById('lunchSide').value = '';
+                document.getElementById('dinnerMain').value = '';
+                document.getElementById('dinnerSide').value = '';
                 
                 // Fill existing meals for the selected date
                 meals.forEach(meal => {
                     if (meal.date === selectedDate) {
                         if (meal.mealType === 'Frühstück') {
-                            document.getElementById('breakfast').value = meal.dish;
+                            if (Array.isArray(meal.dishes)) {
+                                document.getElementById('breakfastMain').value = meal.dishes[0] || '';
+                                document.getElementById('breakfastSide').value = meal.dishes[1] || '';
+                            } else {
+                                document.getElementById('breakfastMain').value = meal.dish || '';
+                                document.getElementById('breakfastSide').value = '';
+                            }
                         } else if (meal.mealType === 'Mittagessen') {
-                            document.getElementById('lunch').value = meal.dish;
+                            if (Array.isArray(meal.dishes)) {
+                                document.getElementById('lunchMain').value = meal.dishes[0] || '';
+                                document.getElementById('lunchSide').value = meal.dishes[1] || '';
+                            } else {
+                                document.getElementById('lunchMain').value = meal.dish || '';
+                                document.getElementById('lunchSide').value = '';
+                            }
                         } else if (meal.mealType === 'Abendessen') {
-                            document.getElementById('dinner').value = meal.dish;
+                            if (Array.isArray(meal.dishes)) {
+                                document.getElementById('dinnerMain').value = meal.dishes[0] || '';
+                                document.getElementById('dinnerSide').value = meal.dishes[1] || '';
+                            } else {
+                                document.getElementById('dinnerMain').value = meal.dish || '';
+                                document.getElementById('dinnerSide').value = '';
+                            }
                         }
                     }
                 });
@@ -301,16 +356,17 @@ app.get('/', (req, res) => {
                 dateMeals.forEach(meal => {
                     const mealIcon = meal.mealType === 'Frühstück' ? '🌅' : 
                                    meal.mealType === 'Mittagessen' ? '☀️' : '🌙';
+                    const dishText = Array.isArray(meal.dishes) ? meal.dishes.join('\\n') : (meal.dish || '');
                     html += \`
                         <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                             <div class="flex items-center gap-3">
                                 <span class="text-2xl">\${mealIcon}</span>
                                 <div>
                                     <span class="font-medium text-gray-700">\${meal.mealType}:</span>
-                                    <span class="text-gray-600"> \${meal.dish}</span>
+                                    <div class="text-gray-600 whitespace-pre-wrap"> \${escapeHtml(dishText).replace(/\\n/g, '<br>')}</div>
                                 </div>
                             </div>
-                            <button onclick="deleteMeal('\${meal.id}')" 
+                <button onclick="deleteMeal('\${meal.id}')" 
                                     class="text-red-600 hover:text-red-800 font-medium">
                                 Löschen
                             </button>
@@ -442,51 +498,60 @@ app.get('/api/meals', (req, res) => {
 
 // Add new meal
 app.post('/api/meals', (req, res) => {
-  try {
-    const { date, mealType, dish } = req.body;
-    
-    if (!date || !mealType || !dish) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+    try {
+        const { date, mealType, dish, dishes } = req.body;
 
-    const meals = readMeals();
-    
-    // Check if a meal of the same type already exists for this date
-    const existingMealIndex = meals.findIndex(meal => 
-      meal.date === date && meal.mealType === mealType
-    );
+        // Require date and mealType and at least one of dish/dishes
+        if (!date || !mealType || (!dish && (!dishes || dishes.length === 0))) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
-    if (existingMealIndex !== -1) {
-      // Replace existing meal
-      const existingMeal = meals[existingMealIndex];
-      meals[existingMealIndex] = {
-        ...existingMeal,
-        dish,
-        timestamp: new Date().toISOString()
-      };
-      writeMeals(meals);
-      res.json({ 
-        meal: meals[existingMealIndex], 
-        replaced: true, 
-        message: `${mealType} für ${date} wurde aktualisiert` 
-      });
-    } else {
-      // Add new meal
-      const newMeal = {
-        id: Date.now().toString(),
-        date,
-        mealType,
-        dish,
-        timestamp: new Date().toISOString()
-      };
-      meals.push(newMeal);
-      writeMeals(meals);
-      res.status(201).json({ meal: newMeal, replaced: false });
+        const meals = readMeals();
+
+        // Normalise incoming meal: prefer `dishes` array for multiple items, otherwise single `dish` string
+        let payload = {};
+        if (Array.isArray(dishes) && dishes.length > 1) {
+            payload.dishes = dishes;
+        } else if (Array.isArray(dishes) && dishes.length === 1) {
+            payload.dish = String(dishes[0]);
+        } else if (dish) {
+            payload.dish = String(dish);
+        }
+
+        // Check if a meal of the same type already exists for this date
+        const existingMealIndex = meals.findIndex(meal => meal.date === date && meal.mealType === mealType);
+
+        if (existingMealIndex !== -1) {
+            // Replace existing meal, preserve id and other fields
+            const existingMeal = meals[existingMealIndex];
+            meals[existingMealIndex] = {
+                ...existingMeal,
+                ...payload,
+                timestamp: new Date().toISOString()
+            };
+            writeMeals(meals);
+            res.json({
+                meal: meals[existingMealIndex],
+                replaced: true,
+                message: `${mealType} für ${date} wurde aktualisiert`
+            });
+        } else {
+            // Add new meal
+            const newMeal = {
+                id: Date.now().toString(),
+                date,
+                mealType,
+                ...payload,
+                timestamp: new Date().toISOString()
+            };
+            meals.push(newMeal);
+            writeMeals(meals);
+            res.status(201).json({ meal: newMeal, replaced: false });
+        }
+    } catch (error) {
+        console.error('Error adding meal:', error);
+        res.status(500).json({ error: 'Failed to add meal' });
     }
-  } catch (error) {
-    console.error('Error adding meal:', error);
-    res.status(500).json({ error: 'Failed to add meal' });
-  }
 });
 
 // Delete meal
